@@ -27,7 +27,7 @@ class PRLRelations extends Omeka_Plugin_Abstract {
      * @throws Exception
      */
     function hookInstall() {
-//        $db = get_db();
+//        $db = get_db()cou;
 //die("got to the installer method...");
         $this->_saveVocabularies();
     }
@@ -39,37 +39,50 @@ class PRLRelations extends Omeka_Plugin_Abstract {
     }
 
     private function _saveVocabularies(){
-            // Install the formal vocabularies and their properties.
-        $formalVocabularies = include 'formal_vocabularies.php';
-        foreach ($formalVocabularies as $formalVocabulary) {
-            $vocabulary = new ItemRelationsVocabulary;
-            $vocabulary->name = $formalVocabulary['name'];
-            $vocabulary->description = $formalVocabulary['description'];
-            $vocabulary->namespace_prefix = $formalVocabulary['namespace_prefix'];
-            $vocabulary->namespace_uri = $formalVocabulary['namespace_uri'];
-            $vocabulary->custom = 0;
-            $v = $vocabulary->save();
-            if(!$v){
-                die("couldn't save record");
-            }
+        // Install the formal vocabularies and their properties.
+        $db  = get_db();
+        $fVs = include 'formal_vocabularies.php';
+        $irp = $db->getTable('ItemRelationsProperty');
+        $irv = $db->getTable('ItemRelationsVocabulary');
+        
+        foreach ($fVs as $fV) {
             
-
-//            $vocabularyId = $db->lastInsertId();
-            $vocabularyId = $vocabulary->id;
+            echo $fV['name'];
             
-            foreach ($formalVocabulary['properties'] as $formalProperty) {
-                $property = new ItemRelationsProperty;
-                $property->vocabulary_id = $vocabularyId;
-                $property->local_part = $formalProperty['local_part'];
-                $property->label = $formalProperty['label'];
-                $property->description = $formalProperty['description'];
-                $property->save();
+            
+            //check for existing vocab
+            $found = $irv->findBySql('name = ? ', array($fV['name']));
+         
+            
+            $vocab = !isset($found[0]) ? new ItemRelationsVocabulary() : $found[0];
+            
+            $vocab->name               = $fV['name'];
+            $vocab->custom             = 0;
+            $vocab->description        = $fV['description'];
+            $vocab->namespace_uri      = $fV['namespace_uri'];
+            $vocab->namespace_prefix   = $fV['namespace_prefix'];
+            
+            $vocab->save();
+            
+            foreach ($fV['properties'] as $fP) {
                 
+                //check for existing property
+                $found = $irp->findBySql('local_part = ? ',array($fP['local_part']));
+                $prop  = !isset($found[0]) ? new ItemRelationsProperty() : $found[0];
+                
+                $prop->vocabulary_id   = $vocab->id;
+                $prop->description     = $fP['description'];
+                $prop->local_part      = $fP['local_part'];
+                $prop->label           = $fP['label'];
+                
+                $prop->save();
+                
+                debug(sprintf("saved property %s in vocabulary %s", $prop->local_part, $vocab->name));  
               
             }
         
-            die("couldn't save vocab");
-        
+             
+       
         }
     }
 
