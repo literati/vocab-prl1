@@ -43,7 +43,14 @@ return $formalVocabularies = array(
                 'local_part' => 'settingOfEvent', 
                 'label' => 'Setting of historic event', 
                 'description' => 'this points from an event in history to its setting'
+            ),
+            array(
+                'local_part' => 'representativeDepictionOf', 
+                'label' => 'Representative Depiction', 
+                'description' => 'This image is representative of some concept, item, tale, event. 
+                    This helps identify imagery to use as a cover image.'
             ), 
+
         )
     ), 
      
